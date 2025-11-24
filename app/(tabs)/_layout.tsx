@@ -10,7 +10,7 @@ export default function TabsLayout() {
         options={{
           title: "Stream",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="videocam-outline" size={size} color={color} />
+            <Ionicons name="videocam" size={size} color={color} />
           ),
         }}
       />
@@ -19,7 +19,7 @@ export default function TabsLayout() {
         options={{
           title: "Map",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="map-outline" size={size} color={color} />
+            <Ionicons name="map" size={size} color={color} />
           ),
         }}
       />

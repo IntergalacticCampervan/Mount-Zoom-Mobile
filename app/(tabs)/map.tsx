@@ -1,8 +1,10 @@
 // app/(tabs)/map.tsx
-import { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Animated, Image, StyleSheet, View } from "react-native";
 import MapView, { Marker, Region } from "react-native-maps";
-import { GPS_URL, theme } from "../../constants/config";
+import { TText } from "../../components/ui/TText";
+import { GPS_POLL_MS, GPS_URL } from "../../constants/config";
+import { theme } from "../../lib/theme";
 
 type Position = {
   latitude: number;
@@ -13,9 +15,28 @@ export default function MapScreen() {
   const [position, setPosition] = useState<Position | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const pulse = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [pulse]);
+
   useEffect(() => {
     fetchPosition();
-    const id = setInterval(fetchPosition, 10_000); // match your web behaviour
+    const id = setInterval(fetchPosition, GPS_POLL_MS);
     return () => clearInterval(id);
   }, []);
 
@@ -23,9 +44,7 @@ export default function MapScreen() {
     try {
       setLoading(true);
       const res = await fetch(GPS_URL);
-      if (!res.ok) {
-        throw new Error(`GPS error: ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`GPS error: ${res.status}`);
       const data = await res.json();
       setPosition({ latitude: data.lat, longitude: data.lon });
     } catch (err) {
@@ -38,14 +57,8 @@ export default function MapScreen() {
   if (!position) {
     return (
       <View style={styles.center}>
-        {loading ? (
-          <>
-            <ActivityIndicator />
-            <Text style={styles.centerText}>Seeking the beacons…</Text>
-          </>
-        ) : (
-          <Text style={styles.centerText}>No position from Mount Zoom</Text>
-        )}
+        <TText variant="subheading">Seeking the beacons…</TText>
+        {loading && <TText muted>Awaiting position from Mount Zoom</TText>}
       </View>
     );
   }
@@ -57,25 +70,67 @@ export default function MapScreen() {
     longitudeDelta: 0.05,
   };
 
+  const scale = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.3],
+  });
+
+  const opacity = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.7, 0],
+  });
+
   return (
-    <View style={styles.container}>
+    <View style={styles.root}>
       <MapView style={StyleSheet.absoluteFillObject} initialRegion={region}>
-        <Marker coordinate={position} title="Mount Zoom" />
+        <Marker coordinate={position}>
+          <View style={styles.markerWrapper}>
+            <Animated.View
+              style={[
+                styles.pulseRing,
+                {
+                  transform: [{ scale }],
+                  opacity,
+                },
+              ]}
+            />
+            <Image
+              source={require("../../assets/images/eye-marker.png")}
+              style={styles.eye}
+            />
+          </View>
+        </Marker>
       </MapView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  root: {
+    flex: 1,
+    backgroundColor: theme.colors.bg,
+  },
   center: {
     flex: 1,
     backgroundColor: theme.colors.bg,
     justifyContent: "center",
     alignItems: "center",
+    gap: 4,
   },
-  centerText: {
-    marginTop: 8,
-    color: theme.colors.text,
+  markerWrapper: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  eye: {
+    width: 32,
+    height: 32,
+  },
+  pulseRing: {
+    position: "absolute",
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 2,
+    borderColor: theme.colors.goldSoft,
   },
 });

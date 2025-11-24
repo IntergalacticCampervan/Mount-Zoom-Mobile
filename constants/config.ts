@@ -10,6 +10,10 @@ export const GPS_URL = `${MOUNT_ZOOM_BASE}/gps/location`;
 // OpenWeatherMap – use your real key here
 export const OPENWEATHER_API_KEY = "299fbf95adcf65d403987fbec5b80a23";
 
+export const GPS_POLL_MS = 10_000; // 10 seconds
+
+export const WEATHER_POLL_MS = 15 * 60_000; // 15 minutes
+
 export const theme = {
   colors: {
     bg: "#05060A",
