@@ -102,7 +102,7 @@ export default function DashboardScreen() {
 
   return (
     <ImageBackground
-      source={require("../../assets/images/parchment-bg.png")}
+      source={require("../assets/images/splash-icon.png")}
       style={styles.bg}
       resizeMode="cover"
     >
